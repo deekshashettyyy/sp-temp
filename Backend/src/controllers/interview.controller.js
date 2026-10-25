@@ -18,7 +18,7 @@ export const postStartInterview = async (req, res, next) => {
 
     const result = await analyzeRepository(repositoryUrl.trim());
 
-    const questions = generateQuestions(
+    const questions = await generateQuestions(
       result.analysis.sourceFiles,
       5
     );

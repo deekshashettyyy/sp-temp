@@ -2,19 +2,28 @@
 export default function RepositorySummary({ repository, analysis }) {
   if (!repository || !analysis) return null;
 
+  const stats = [
+    { label: "Repository files", value: analysis.totalFiles ?? 0 },
+    { label: "Files inspected", value: analysis.sourceFilesRetrieved ?? 0 },
+    { label: "Primary language", value: repository.language || "Unknown" },
+    { label: "Default branch", value: repository.defaultBranch || "Unknown" },
+  ];
+
+  const technologies = analysis.technologies || [];
+
   return (
-    <section className="panel">
-      <div className="section-heading">
+    <section className="sp-repository-card">
+      <div className="sp-repository-heading">
         <div>
-          <p className="eyebrow">REPOSITORY ANALYSIS</p>
+          <p className="sp-eyebrow">REPOSITORY ANALYSIS</p>
           <h2>{repository.name}</h2>
-          <p className="muted">
+          <p className="sp-repository-description">
             {repository.description || "No description provided."}
           </p>
         </div>
 
         <a
-          className="text-link"
+          className="sp-github-link"
           href={repository.url}
           target="_blank"
           rel="noreferrer"
@@ -23,36 +32,26 @@ export default function RepositorySummary({ repository, analysis }) {
         </a>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <span>Files in repository</span>
-          <strong>{analysis.totalFiles}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Source files retrieved</span>
-          <strong>{analysis.sourceFilesRetrieved}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Primary language</span>
-          <strong>{repository.language || "Unknown"}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Default branch</span>
-          <strong>{repository.defaultBranch}</strong>
-        </div>
+      <div className="sp-repository-stats">
+        {stats.map((stat) => (
+          <div className="sp-repository-stat" key={stat.label}>
+            <span>{stat.label}</span>
+            <strong>{stat.value}</strong>
+          </div>
+        ))}
       </div>
 
-      <h3>Detected technologies</h3>
-
-      <div className="technology-list">
-        {analysis.technologies.map((technology) => (
-          <span className="technology-tag" key={technology}>
-            {technology}
-          </span>
-        ))}
+      <div className="sp-technologies">
+        <h3>Detected technologies</h3>
+        {technologies.length > 0 ? (
+          <div className="sp-technology-list">
+            {technologies.map((technology) => (
+              <span key={technology}>{technology}</span>
+            ))}
+          </div>
+        ) : (
+          <p>No technologies detected yet.</p>
+        )}
       </div>
     </section>
   );

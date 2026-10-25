@@ -8,6 +8,8 @@ export default function QuestionList({ questions }) {
   const [feedback, setFeedback] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [finished, setFinished] = useState(false);
+
 
   if (!questions?.length) {
     return (
@@ -16,6 +18,98 @@ export default function QuestionList({ questions }) {
         <p className="muted">
           Try a repository containing supported source code.
         </p>
+      </section>
+    );
+  }
+
+  const answeredCount = questions.filter(
+    (item) => feedback[item.id]
+  ).length;
+
+  const averageScore = answeredCount
+    ? Math.round(
+        questions.reduce(
+          (sum, item) => sum + (feedback[item.id] ? feedback[item.id].score : 0),
+          0
+        ) / answeredCount
+      )
+    : 0;
+
+  if (finished) {
+    return (
+      <section className="panel interview-panel">
+        <p className="eyebrow">INTERVIEW COMPLETED</p>
+        <h2>That's a wrap.</h2>
+        <p className="muted">
+          You've reached the end of this repository-based interview.
+          Here's a summary of your attempt.
+        </p>
+
+        <div className="completion-stats">
+          <div className="completion-stat">
+            <span>Total questions</span>
+            <strong>{questions.length}</strong>
+          </div>
+
+          <div className="completion-stat">
+            <span>Answers evaluated</span>
+            <strong>{answeredCount}</strong>
+          </div>
+
+          <div className="completion-stat">
+            <span>Average score</span>
+            <strong>{answeredCount ? `${averageScore}/10` : "—"}</strong>
+          </div>
+        </div>
+
+        <h3>Question results</h3>
+
+        <div className="completion-results">
+          {questions.map((item, index) => {
+            const result = feedback[item.id];
+
+            return (
+              <div className="completion-result" key={item.id}>
+                <div>
+                  <strong>Question {index + 1}</strong>
+                  <p>{item.topic}</p>
+                </div>
+
+                <span>
+                  {result ? `${result.score}/100` : "Not answered"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="question-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setFinished(false);
+              setActiveIndex(0);
+              setAnswer("");
+              setError("");
+            }}
+          >
+            Review answers
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setFinished(false);
+              setActiveIndex(0);
+              setAnswer("");
+              setFeedback({});
+              setError("");
+            }}
+          >
+            Start new attempt
+          </button>
+        </div>
       </section>
     );
   }
@@ -36,10 +130,11 @@ export default function QuestionList({ questions }) {
 
     try {
       const result = await evaluateAnswer({
-        question: question.question,
-        answer: answer.trim(),
-        sourceFile: question.sourceFile,
-      });
+      question: question.question,
+      answer: answer.trim(),
+      sourceFile: question.sourceFile,
+      evidence: question.evidence,
+    });
 
       setFeedback((previous) => ({
         ...previous,
@@ -204,18 +299,28 @@ export default function QuestionList({ questions }) {
           ← Previous
         </button>
 
-        <button
-          type="button"
-          onClick={() => goToQuestion(activeIndex + 1)}
-          disabled={activeIndex === questions.length - 1 || loading}
-        >
-          Next question →
-        </button>
+        {activeIndex < questions.length - 1 ? (
+          <button
+            type="button"
+            onClick={() => goToQuestion(activeIndex + 1)}
+            disabled={loading}
+          >
+            Next question →
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFinished(true)}
+            disabled={loading}
+          >
+            Finish interview
+          </button>
+        )}
       </div>
 
       <p className="muted">
-        Feedback currently uses rule-based heuristics. Answers are held in
-        component state and are not yet saved to MongoDB.
+        AI-generated feedback is based on the submitted answer and available source
+        evidence. Scores may be imperfect, and answers are not yet saved to MongoDB.
       </p>
     </section>
   );
